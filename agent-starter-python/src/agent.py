@@ -121,33 +121,96 @@
 
 
 
+#======================================================= THIS IS MY WORKING CODE===============================================================
+# import asyncio
+# from dotenv import load_dotenv
+# from livekit import agents
+# from livekit.agents import AgentSession, Agent, RoomInputOptions
+# from livekit.plugins import noise_cancellation, silero, assemblyai
+# from livekit.plugins.turn_detector.multilingual import MultilingualModel
+# from livekit.plugins import openai
+# load_dotenv(".env.local")
+
+# class Assistant(Agent):
+#     def __init__(self) -> None:
+#         super().__init__(
+#             instructions="""You are a helpful voice AI assistant.
+#             You eagerly assist users with their questions by providing information from your extensive knowledge.
+#             Your responses are concise, to the point, and without any complex formatting or punctuation including emojis, asterisks, or other symbols.
+#             You are curious, friendly, and have a sense of humor.""",
+#         )
+
+# async def entrypoint(ctx: agents.JobContext):
+#     session = AgentSession(
+#         stt=assemblyai.STT(),
+#         # stt = openai.STT(
+#         #     model="gpt-4o-transcribe",
+#         # ),
+#         vad=silero.VAD.load(),
+#         turn_detection=MultilingualModel(),
+#     )
+
+#     def _sync_transcription_callback(ev):
+#         asyncio.create_task(_async_transcription_handler(ev))
+
+#     async def _async_transcription_handler(ev):
+#         name = ev.participant.name or "Unknown"
+#         text = ev.text
+#         print(f"{name}: {text}")
+
+#     session.on("transcription", _sync_transcription_callback)
+
+#     await session.start(
+#         room=ctx.room,
+#         agent=Assistant(),
+#         room_input_options=RoomInputOptions(
+#             noise_cancellation=None,
+#         ),
+#     )
+    
+   
+# if __name__ == "__main__":
+#     agents.cli.run_app(agents.WorkerOptions(entrypoint_fnc=entrypoint))
+
+
+
+
 
 import asyncio
 from dotenv import load_dotenv
 from livekit import agents
 from livekit.agents import AgentSession, Agent, RoomInputOptions
-from livekit.plugins import noise_cancellation, silero, assemblyai
-from livekit.plugins.turn_detector.multilingual import MultilingualModel
-from livekit.plugins import openai
+
+# import your custom plugin instead of assemblyai
+from whisper_stt_plugin import STT   # <--- your file containing custom STT
+
 load_dotenv(".env.local")
 
 class Assistant(Agent):
     def __init__(self) -> None:
         super().__init__(
             instructions="""You are a helpful voice AI assistant.
-            You eagerly assist users with their questions by providing information from your extensive knowledge.
-            Your responses are concise, to the point, and without any complex formatting or punctuation including emojis, asterisks, or other symbols.
-            You are curious, friendly, and have a sense of humor.""",
+You eagerly assist users with their questions by providing information from your extensive knowledge.
+Your responses are concise, to the point, and without any complex formatting or punctuation including emojis, asterisks, or other symbols.
+You are curious, friendly, and have a sense of humor.""",
         )
 
 async def entrypoint(ctx: agents.JobContext):
+    # Use custom STT here
     session = AgentSession(
-        stt=assemblyai.STT(),
-        # stt = openai.STT(
-        #     model="gpt-4o-transcribe",
-        # ),
-        vad=silero.VAD.load(),
-        turn_detection=MultilingualModel(),
+        stt = STT(
+            model_name="base", 
+            device="cpu",
+            compute_type="int8",
+            beam_size=3,
+            language="en",
+            vad_threshold=0.55,  # Silero VAD threshold
+            min_silence_duration_ms=300,  # 500ms silence to end
+            min_speech_duration_ms=200,
+            # buffer_size_seconds=0.1,
+
+        ),
+        # Optionally: turn_detection / vad only if needed — or omit if handled inside
     )
 
     def _sync_transcription_callback(ev):
@@ -167,7 +230,6 @@ async def entrypoint(ctx: agents.JobContext):
             noise_cancellation=None,
         ),
     )
-    
-   
+
 if __name__ == "__main__":
     agents.cli.run_app(agents.WorkerOptions(entrypoint_fnc=entrypoint))
