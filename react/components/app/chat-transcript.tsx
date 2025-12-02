@@ -12,7 +12,7 @@ const CONTAINER_MOTION_PROPS = {
     hidden: {
       opacity: 0,
       transition: {
-        ease: [0.0, 0.0, 0.58, 1],
+        // ease: 'easeOut',
         duration: 0.3,
         staggerChildren: 0.1,
         staggerDirection: -1,
@@ -22,7 +22,7 @@ const CONTAINER_MOTION_PROPS = {
       opacity: 1,
       transition: {
         delay: 0.2,
-        ease: [0.0, 0.0, 0.58, 1],
+        // ease: 'easeOut',
         duration: 0.3,
         staggerDelay: 0.2,
         staggerChildren: 0.1,
